@@ -6,6 +6,7 @@
   "scripts": {
     "serve": "nodemon --delay 100ms --watch . --exec node index.js",
     "serve2": "nodemon --delay 100ms --watch . --exec node ./scripts/export-infographic-test.js",
+    "serve3": "nodemon --delay 100ms --watch . --exec node ./scripts/export-video-test.js",
     "serve-paper": "nodemon --delay 100ms --watch . --exec node index-paper.js",
     "serve-paper-lottie": "nodemon --delay 100ms --watch . --exec node index-paper-lottie.js",
     "serve-node-canvas": "nodemon --delay 100ms --watch . --exec node index-node-canvas.js",
@@ -37,6 +38,8 @@
     "xmldom": "0.1.27",
     "svg2img": "0.6.1",
     "paper": "0.12.3",
-    "paper-jsdom-canvas": "0.12.3"
+    "paper-jsdom-canvas": "0.12.3",
+    "fluent-ffmpeg": "2.1.2",
+    "@ffmpeg-installer/ffmpeg": "1.0.20"
   }
 }
