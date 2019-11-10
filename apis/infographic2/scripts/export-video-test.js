@@ -12,7 +12,7 @@ const data = {
       feeling: "Tuyệt vời",
       activity: "Đi bộ đường dài ngắn ngày",
       highlights: "Đẹp, Nguy hiểm",
-      signedUrl: "http://placekitten.com/700/500"
+      signedUrl: "./data/input/500x700.jpeg"
     },
     {
       locationId: "2b877a4c-5bf9-4315-a8b4-02f44971879d",
@@ -56,6 +56,7 @@ const stream = require("stream");
 const Readable = require("stream").Readable;
 const util = require("util");
 
+// how to stream images to video https://github.com/fluent-ffmpeg/node-fluent-ffmpeg/issues/546
 function SimpleRawImageStream(buf, num, opts) {
   // init Readable
   Readable.call(this, opts);
@@ -90,7 +91,7 @@ SimpleRawImageStream.prototype._read = function() {
     let rawImage = this.buf;
     ready = this.push(rawImage);
 
-    console.error("  %s %s -> %s", this._n, rawImage.length, ready);
+    // console.error("  %s %s -> %s", this._n, rawImage.length, ready);
   }
   return true;
 };
@@ -128,6 +129,7 @@ const startTimer = new Date().getTime();
     // })
     .on("end", function() {
       console.log("Processing finished !");
+      console.log(`TIMER ${new Date().getTime() - startTimer} ms: completed`);
     });
 
   const canvasAdaptor = await genericDraw.draw(
@@ -158,10 +160,12 @@ const startTimer = new Date().getTime();
     .inputOptions("-s " + opts.width + "x" + opts.height);
 
   command
-    // .videoCodec("libx264")
-    // .audioCodec("libmp3lame")
     .size(opts.width + "x" + opts.height)
-    .save("output-video.avi");
+    .format("mp4")
+    .videoCodec("libx264")
+    .audioCodec("libmp3lame")
+    .output("output-video.mp4")
+    .run();
 
   // fs.writeFileSync("output.jpeg", buf);
   console.log(`TIMER ${new Date().getTime() - startTimer} ms: completed`);
