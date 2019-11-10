@@ -1,4 +1,4 @@
-const { registerFont } = require("canvas");
+const { registerFont, createCanvas } = require("canvas");
 const paper = require("paper-jsdom-canvas");
 const fs = require("fs");
 // const path = require("path");
@@ -46,6 +46,8 @@ class CanvasAdaptor {
 
     this.canvas = canvas;
     this.paper = paper;
+
+    this.currentFrame = 0;
   }
   draw() {
     this.paper.view.draw();
@@ -341,6 +343,57 @@ class CanvasAdaptor {
     circle.style = {
       fillColor: options.fillColor
     };
+  }
+
+  async drawLottieAsync(lottieFile) {
+    const lottie = require("lottie-node");
+
+    let w, h;
+    const canvasLottie = createCanvas(w || 1000, h || 1000);
+    this.canvasLottieAnimation = canvasLottie;
+
+    var animation = lottie(lottieFile, canvasLottie);
+    this.lottieAnimation = animation;
+    animation.playSegments([[this.currentFrame, this.currentFrame + 1]], true);
+    this.currentFrame++;
+
+    return new Promise((resolve, reject) => {
+      //integrate
+      var rasterLottie = new paper.Raster({
+        source: canvasLottie.toDataURL(),
+        position: paper.view.bounds.center
+      });
+      rasterLottie.onLoad = function(e) {
+        console.log("lottie load", e);
+        resolve();
+      };
+      this.rasterLottieAnimation = rasterLottie;
+    });
+  }
+
+  async drawNextFrameAsync() {
+    this.rasterLottieAnimation.remove();
+    this.lottieAnimation.playSegments(
+      [[this.currentFrame, this.currentFrame + 1]],
+      true
+    );
+
+    console.log(this.currentFrame);
+    this.currentFrame++;
+
+    return new Promise((resolve, reject) => {
+      // return resolve();
+      //integrate
+      var rasterLottie = new paper.Raster({
+        source: this.canvasLottieAnimation.toDataURL(),
+        position: paper.view.bounds.center
+      });
+      rasterLottie.onLoad = function(e) {
+        console.log("lottie load", e);
+        resolve();
+      };
+      this.rasterLottieAnimation = rasterLottie;
+    });
   }
 }
 

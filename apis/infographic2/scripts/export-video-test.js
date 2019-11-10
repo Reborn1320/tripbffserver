@@ -132,11 +132,30 @@ const startTimer = new Date().getTime();
       console.log(`TIMER ${new Date().getTime() - startTimer} ms: completed`);
     });
 
-  const canvasAdaptor = await genericDraw.draw(
+  const canvasAdaptor = await genericDraw.drawVideoFrame(
     data,
     infographicTypes.INFOGRAPHIC_TYPE.FIRST_RELEASED
   );
   canvasAdaptor.draw();
+  let buf2 = await canvasAdaptor.toBufferJpeg();
+  fs.writeFileSync(
+    `output/video-image-output.jpg`,
+    buf2
+  );
+
+  for (let idx = 0; idx < 20; idx++) {
+    if (idx !== 0) {
+      await canvasAdaptor.drawNextFrameAsync();
+      canvasAdaptor.draw();
+    }
+
+    let buf2 = await canvasAdaptor.toBufferJpeg();
+    fs.writeFileSync(
+      `output/video-image-output-${("0000" + idx).slice(-4)}.jpg`,
+      buf2
+    );
+    console.log("complete 1 frame");
+  }
 
   let buf = await canvasAdaptor.toBufferRaw();
 

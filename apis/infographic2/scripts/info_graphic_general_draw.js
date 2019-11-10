@@ -20,6 +20,25 @@ async function draw(trip, infographicType) {
   return canvasAdaptor;
 }
 
+async function drawVideoFrame(trip, infographicType) {
+  let numberOfLocations = trip.locations.length;
+  let canvasAdaptor = new CanvasAdaptor();
+  if (infographicType == INFOGRAPHIC_TYPE.FIRST_RELEASED) {
+    if (numberOfLocations == 1) {
+      await draw_01_01.draw(canvasAdaptor, trip);
+    } else if (numberOfLocations == 2) {
+      await draw_01_02.draw(canvasAdaptor, trip);
+    } else {
+      await draw_01_others.draw(canvasAdaptor, trip);
+    }
+  }
+
+  await canvasAdaptor.drawLottieAsync("./data/B.json");
+
+  return canvasAdaptor;
+}
+
 module.exports = {
-  draw
+  draw,
+  drawVideoFrame
 };
