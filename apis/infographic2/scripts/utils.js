@@ -55,6 +55,10 @@ class CanvasAdaptor {
     fs.writeFileSync(file, buf);
   }
 
+  toBufferRaw() {
+    return paper.view.element.toBuffer("raw");
+  }
+
   toBufferJpeg() {
     return paper.view.element.toBuffer("image/jpeg", {
       quality: 0.9

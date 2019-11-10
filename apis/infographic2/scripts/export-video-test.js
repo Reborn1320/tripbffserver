@@ -53,6 +53,47 @@ const infographicTypes = require("./info_graphic_type");
 const genericDraw = require("./info_graphic_general_draw");
 const fs = require("fs");
 const stream = require("stream");
+const Readable = require("stream").Readable;
+const util = require("util");
+
+function SimpleRawImageStream(buf, num, opts) {
+  // init Readable
+  Readable.call(this, opts);
+  opts = opts || {};
+
+  // save the length to generate
+  this._numToGenerate = num;
+  this._n = 0;
+  this.width = opts.width || 128;
+  this.height = opts.height || 32;
+  this.buf = buf;
+}
+util.inherits(SimpleRawImageStream, Readable);
+SimpleRawImageStream.prototype._read = function() {
+  let ready = true;
+  while (ready) {
+    if (++this._n > this._numToGenerate) {
+      console.error("done!");
+      this.push(null);
+      return false;
+    }
+
+    // let rawImage = new Buffer(this.width * this.height * 3);
+    // let i = 0;
+    // while (i < rawImage.length) {
+    //   rawImage[i++] = 0xff; // red
+    //   rawImage[i++] = 0x00; // green
+    //   rawImage[i++] = 0x00; // blue
+    // }
+    // ready = this.push(rawImage);
+
+    let rawImage = this.buf;
+    ready = this.push(rawImage);
+
+    console.error("  %s %s -> %s", this._n, rawImage.length, ready);
+  }
+  return true;
+};
 
 const ffmpegPath = require("@ffmpeg-installer/ffmpeg").path;
 const ffmpeg = require("fluent-ffmpeg");
@@ -60,14 +101,21 @@ ffmpeg.setFfmpegPath(ffmpegPath);
 
 const startTimer = new Date().getTime();
 
+// function createStreamFromBuffer(buf) {
+//   const readable = new stream.Readable();
+//   readable._read = () => {}; // _read is required but you can noop it
+//   readable.push(buf);
+//   readable.push(null);
+//   return readable;
+// }
+
 (async () => {
   //make sure input images ancided as `Huffman` https://stackoverflow.com/questions/3735823/ffmpeg-not-finding-codec-parameters
   var command = ffmpeg()
-    .input("./data/images2/%03d.jpg")
-    .withFpsInput(2)
-    // .videoFilter("fps=5") //make sure fps > 1
-    .loop(5)
-    // .fps(1)
+    // .input("./data/images2/%03d.jpg")
+    // .withFpsInput(2)
+    // // .videoFilter("fps=5") //make sure fps > 1
+    // .loop(5)
     .on("progress", function(progress) {
       console.log("Processing: ", progress);
       console.log("Processing: " + progress.percent + "% done");
@@ -80,29 +128,40 @@ const startTimer = new Date().getTime();
     // })
     .on("end", function() {
       console.log("Processing finished !");
-    })
-    ;
+    });
 
-  // const canvasAdaptor = await genericDraw.draw(
-  //   data,
-  //   infographicTypes.INFOGRAPHIC_TYPE.FIRST_RELEASED
-  // );
-  // canvasAdaptor.draw();
+  const canvasAdaptor = await genericDraw.draw(
+    data,
+    infographicTypes.INFOGRAPHIC_TYPE.FIRST_RELEASED
+  );
+  canvasAdaptor.draw();
 
-  // let buf = await canvasAdaptor.toBufferJpeg();
-  // const readable = new stream.Readable();
-  // readable._read = () => {}; // _read is required but you can noop it
-  // readable.push(buf);
-  // readable.push(null);
+  let buf = await canvasAdaptor.toBufferRaw();
 
-  // command = command.input(readable);
+  // fs.writeFileSync("video-image-test.jpg", buf);
+
+  // command = command
+  //   .input(readable)
+  //   // .input(createStreamFromBuffer(buf))
+  //   .withFpsInput(2);
+  // // .videoFilter("fps=5") //make sure fps > 1
+
+  const opts = {
+    width: 940,
+    height: 1070
+  };
+  command = command
+    .input(new SimpleRawImageStream(buf, 100, opts))
+    .inputFormat("rawvideo")
+    .inputOptions("-pix_fmt bgra")
+    // .inputOptions("-pix_fmt argb")
+    .inputOptions("-s " + opts.width + "x" + opts.height);
 
   command
-    .videoCodec("libx264")
-    .audioCodec("libmp3lame")
-    .size("1200x1200")
-    .save("output-video.avi")
-    ;
+    // .videoCodec("libx264")
+    // .audioCodec("libmp3lame")
+    .size(opts.width + "x" + opts.height)
+    .save("output-video.avi");
 
   // fs.writeFileSync("output.jpeg", buf);
   console.log(`TIMER ${new Date().getTime() - startTimer} ms: completed`);
