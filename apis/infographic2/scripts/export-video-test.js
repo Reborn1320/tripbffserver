@@ -80,11 +80,23 @@ SimpleRawImageStream.prototype._read = async function() {
     }
 
     if (this._n !== 0) {
+      let startNextFrameTimer = new Date().getTime();
       await this.canvasAdapter.drawNextFrameAsync();
+      console.log(
+        `TIMER ${new Date().getTime() - startNextFrameTimer} ms: next-frame`
+      );
+      startNextFrameTimer = new Date().getTime();
       this.canvasAdapter.draw();
+      console.log(
+        `TIMER ${new Date().getTime() - startNextFrameTimer} ms: re-draw`
+      );
     }
 
+    const startBufferRawTimer = new Date().getTime();
     let rawImage = await this.canvasAdapter.toBufferRaw();
+    console.log(
+      `TIMER ${new Date().getTime() - startBufferRawTimer} ms: to buffer`
+    );
     ready = this.push(rawImage);
     this._n++;
     // console.error("  %s %s -> %s", this._n, rawImage.length, ready);
@@ -171,6 +183,4 @@ const startTimer = new Date().getTime();
   });
 
   ffStream.pipe(outStream);
-
-  console.log(`TIMER ${new Date().getTime() - startTimer} ms: completed`);
 })();

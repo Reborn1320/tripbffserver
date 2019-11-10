@@ -372,10 +372,18 @@ class CanvasAdaptor {
   }
 
   async drawNextFrameAsync() {
+    let startRemoveTimer = new Date().getTime();
     this.rasterLottieAnimation.remove();
+    console.log(
+      `  TIMER ${new Date().getTime() - startRemoveTimer} ms: remove raster`
+    );
+    startRemoveTimer = new Date().getTime();
     this.lottieAnimation.playSegments(
       [[this.currentFrame, this.currentFrame + 1]],
       true
+    );
+    console.log(
+      `  TIMER ${new Date().getTime() - startRemoveTimer} ms: play segments`
     );
 
     // console.log(this.currentFrame);
@@ -383,13 +391,23 @@ class CanvasAdaptor {
 
     return new Promise((resolve, reject) => {
       // return resolve();
+      let startLoadTimer = new Date().getTime();
+
       //integrate
       var rasterLottie = new paper.Raster({
-        source: this.canvasLottieAnimation.toDataURL(),
+        source: this.canvasLottieAnimation.toDataURL("image/png"),
         position: paper.view.bounds.center
       });
+      console.log(
+        `  TIMER ${new Date().getTime() - startLoadTimer} ms: toDataURL`
+      );
+      startLoadTimer = new Date().getTime();
+
       rasterLottie.onLoad = function(e) {
         // console.log("lottie load", e);
+        console.log(
+          `  TIMER ${new Date().getTime() - startLoadTimer} ms: load raster`
+        );
         resolve();
       };
       this.rasterLottieAnimation = rasterLottie;
