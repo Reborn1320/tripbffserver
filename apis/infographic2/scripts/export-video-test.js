@@ -57,20 +57,20 @@ const Readable = require("stream").Readable;
 const util = require("util");
 
 // how to stream images to video https://github.com/fluent-ffmpeg/node-fluent-ffmpeg/issues/546
-function SimpleRawImageStream(bufs, num, opts) {
+function SimpleRawImageStream(canvasAdapter, num, opts) {
   // init Readable
   Readable.call(this, opts);
   opts = opts || {};
 
   // save the length to generate
-  this._numToGenerate = bufs.length > num ? num : bufs.length;
+  this._numToGenerate = num;
   this._n = 0;
   this.width = opts.width || 128;
   this.height = opts.height || 32;
-  this.bufs = bufs;
+  this.canvasAdapter = canvasAdapter;
 }
 util.inherits(SimpleRawImageStream, Readable);
-SimpleRawImageStream.prototype._read = function() {
+SimpleRawImageStream.prototype._read = async function() {
   let ready = true;
   while (ready) {
     if (this._n >= this._numToGenerate) {
@@ -79,13 +79,20 @@ SimpleRawImageStream.prototype._read = function() {
       return false;
     }
 
-    let rawImage = this.bufs[this._n];
+    if (this._n !== 0) {
+      await this.canvasAdapter.drawNextFrameAsync();
+      this.canvasAdapter.draw();
+    }
+
+    let rawImage = await this.canvasAdapter.toBufferRaw();
     ready = this.push(rawImage);
     this._n++;
     // console.error("  %s %s -> %s", this._n, rawImage.length, ready);
   }
   return true;
 };
+
+SimpleRawImageStream.prototype.setBuf = function() {};
 
 const ffmpegPath = require("@ffmpeg-installer/ffmpeg").path;
 const ffmpeg = require("fluent-ffmpeg");
@@ -102,7 +109,13 @@ const startTimer = new Date().getTime();
 // }
 
 (async () => {
-  //make sure input images ancided as `Huffman` https://stackoverflow.com/questions/3735823/ffmpeg-not-finding-codec-parameters
+  const opts = {
+    width: 940,
+    height: 1070,
+    n: 100
+  };
+
+  //make sure input images encoded as `Huffman` https://stackoverflow.com/questions/3735823/ffmpeg-not-finding-codec-parameters
   var command = ffmpeg()
     // .input("./data/images2/%03d.jpg")
     // .withFpsInput(2)
@@ -129,50 +142,35 @@ const startTimer = new Date().getTime();
   );
   canvasAdaptor.draw();
 
-  let bufs = [];
+  // let bufs = [];
+  let imagesStream = new SimpleRawImageStream(canvasAdaptor, opts.n, opts);
+  imagesStream.on("data", chunk => {
+    console.log("IN  Stream: emit data event " + chunk.length + " bytes");
+  });
 
-  for (let idx = 0; idx < 100; idx++) {
-    if (idx !== 0) {
-      await canvasAdaptor.drawNextFrameAsync();
-      canvasAdaptor.draw();
-    }
-
-    let buf2 = await canvasAdaptor.toBufferRaw();
-    bufs.push(buf2);
-    // fs.writeFileSync(
-    //   `output/video-image-output-${("0000" + idx).slice(-4)}.jpg`,
-    //   buf2
-    // );
-    console.log("complete 1 frame");
-  }
-
-  // command = command
-  //   .input(readable)
-  //   // .input(createStreamFromBuffer(buf))
-  //   .withFpsInput(2);
-  // // .videoFilter("fps=5") //make sure fps > 1
-
-  const opts = {
-    width: 940,
-    height: 1070
-  };
   command = command
-    .input(new SimpleRawImageStream(bufs, 100, opts))
+    .input(imagesStream)
     .inputFormat("rawvideo")
     .inputOptions("-pix_fmt bgra")
     // .inputOptions("-pix_fmt argb")
-    .inputOptions("-s " + opts.width + "x" + opts.height)
-    // .inputFPS(5)
-    ;
+    .inputOptions("-s " + opts.width + "x" + opts.height);
 
-  command
+  //output
+  var outStream = fs.createWriteStream("output-video.mp4");
+
+  command = command
     .size(opts.width + "x" + opts.height)
     .format("mp4")
     .videoCodec("libx264")
     .audioCodec("libmp3lame")
-    .output("output-video.mp4")
-    .run();
+    .outputOptions("-movflags frag_keyframe+empty_moov"); // https://github.com/fluent-ffmpeg/node-fluent-ffmpeg/issues/346
 
-  // fs.writeFileSync("output.jpeg", buf);
+  let ffStream = command.pipe();
+  ffStream.on("data", function(chunk) {
+    console.log("OUT Stream: ffmpeg just wrote " + chunk.length + " bytes");
+  });
+
+  ffStream.pipe(outStream);
+
   console.log(`TIMER ${new Date().getTime() - startTimer} ms: completed`);
 })();

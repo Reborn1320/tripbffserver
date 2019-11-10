@@ -364,7 +364,7 @@ class CanvasAdaptor {
         position: paper.view.bounds.center
       });
       rasterLottie.onLoad = function(e) {
-        console.log("lottie load", e);
+        // console.log("lottie load", e);
         resolve();
       };
       this.rasterLottieAnimation = rasterLottie;
@@ -378,7 +378,7 @@ class CanvasAdaptor {
       true
     );
 
-    console.log(this.currentFrame);
+    // console.log(this.currentFrame);
     this.currentFrame++;
 
     return new Promise((resolve, reject) => {
@@ -389,7 +389,7 @@ class CanvasAdaptor {
         position: paper.view.bounds.center
       });
       rasterLottie.onLoad = function(e) {
-        console.log("lottie load", e);
+        // console.log("lottie load", e);
         resolve();
       };
       this.rasterLottieAnimation = rasterLottie;
