@@ -57,40 +57,31 @@ const Readable = require("stream").Readable;
 const util = require("util");
 
 // how to stream images to video https://github.com/fluent-ffmpeg/node-fluent-ffmpeg/issues/546
-function SimpleRawImageStream(buf, num, opts) {
+function SimpleRawImageStream(bufs, num, opts) {
   // init Readable
   Readable.call(this, opts);
   opts = opts || {};
 
   // save the length to generate
-  this._numToGenerate = num;
+  this._numToGenerate = bufs.length > num ? num : bufs.length;
   this._n = 0;
   this.width = opts.width || 128;
   this.height = opts.height || 32;
-  this.buf = buf;
+  this.bufs = bufs;
 }
 util.inherits(SimpleRawImageStream, Readable);
 SimpleRawImageStream.prototype._read = function() {
   let ready = true;
   while (ready) {
-    if (++this._n > this._numToGenerate) {
+    if (this._n >= this._numToGenerate) {
       console.error("done!");
       this.push(null);
       return false;
     }
 
-    // let rawImage = new Buffer(this.width * this.height * 3);
-    // let i = 0;
-    // while (i < rawImage.length) {
-    //   rawImage[i++] = 0xff; // red
-    //   rawImage[i++] = 0x00; // green
-    //   rawImage[i++] = 0x00; // blue
-    // }
-    // ready = this.push(rawImage);
-
-    let rawImage = this.buf;
+    let rawImage = this.bufs[this._n];
     ready = this.push(rawImage);
-
+    this._n++;
     // console.error("  %s %s -> %s", this._n, rawImage.length, ready);
   }
   return true;
@@ -137,29 +128,23 @@ const startTimer = new Date().getTime();
     infographicTypes.INFOGRAPHIC_TYPE.FIRST_RELEASED
   );
   canvasAdaptor.draw();
-  let buf2 = await canvasAdaptor.toBufferJpeg();
-  fs.writeFileSync(
-    `output/video-image-output.jpg`,
-    buf2
-  );
 
-  for (let idx = 0; idx < 20; idx++) {
+  let bufs = [];
+
+  for (let idx = 0; idx < 100; idx++) {
     if (idx !== 0) {
       await canvasAdaptor.drawNextFrameAsync();
       canvasAdaptor.draw();
     }
 
-    let buf2 = await canvasAdaptor.toBufferJpeg();
-    fs.writeFileSync(
-      `output/video-image-output-${("0000" + idx).slice(-4)}.jpg`,
-      buf2
-    );
+    let buf2 = await canvasAdaptor.toBufferRaw();
+    bufs.push(buf2);
+    // fs.writeFileSync(
+    //   `output/video-image-output-${("0000" + idx).slice(-4)}.jpg`,
+    //   buf2
+    // );
     console.log("complete 1 frame");
   }
-
-  let buf = await canvasAdaptor.toBufferRaw();
-
-  // fs.writeFileSync("video-image-test.jpg", buf);
 
   // command = command
   //   .input(readable)
@@ -172,11 +157,13 @@ const startTimer = new Date().getTime();
     height: 1070
   };
   command = command
-    .input(new SimpleRawImageStream(buf, 100, opts))
+    .input(new SimpleRawImageStream(bufs, 100, opts))
     .inputFormat("rawvideo")
     .inputOptions("-pix_fmt bgra")
     // .inputOptions("-pix_fmt argb")
-    .inputOptions("-s " + opts.width + "x" + opts.height);
+    .inputOptions("-s " + opts.width + "x" + opts.height)
+    // .inputFPS(5)
+    ;
 
   command
     .size(opts.width + "x" + opts.height)
