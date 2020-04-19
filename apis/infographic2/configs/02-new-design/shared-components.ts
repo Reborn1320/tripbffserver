@@ -14,11 +14,7 @@ export const sharedHeader: InfographicConfig.ContainerBlock = {
       blocks: [
         {
           type: "svg",
-          url: "./configs/02-new-design/images/02-location-name-background.svg",
-          positioning: {
-            // left: 133,
-            // top: 24
-          },
+          url: "./configs/02-new-design/images/02-location-name-background.svg",      
         },
         // together making location icon with white background
         {
@@ -39,7 +35,7 @@ export const sharedHeader: InfographicConfig.ContainerBlock = {
 
         // infographic name
         {
-          // location name
+          // trip name
           type: "text",
           text: "{{trip.name}}",
           fontSize: "64px",
@@ -51,9 +47,10 @@ export const sharedHeader: InfographicConfig.ContainerBlock = {
             top: 104,
             left: -40,
           },
+          numberOfLines: 1
         },
         {
-          // location activity
+          // trip information
           type: "text",
           text: "{{trip.info}}",
           fontSize: "40px",
@@ -66,6 +63,7 @@ export const sharedHeader: InfographicConfig.ContainerBlock = {
             top: 190,
             left: -40,
           },
+          numberOfLines: 1
         },
       ],
     },
@@ -77,12 +75,14 @@ const locationDetailsChildren02: InfographicConfig.Block[] = [
     // location name
     type: "text",
     text: "{{location.name}}",
-    fontSize: "64px",
+    fontSize: "54px",
     fontFamily: "Nunito",
     fontWeight: "900",
     color: "#2E97A1",
     textAnchor: "start",
     positioning: {},
+    numberOfLines: 2,
+    width: 500
   },
   {
     // location activity
@@ -98,6 +98,7 @@ const locationDetailsChildren02: InfographicConfig.Block[] = [
       top: 20,
       left: 0,
     },
+    numberOfLines: 2
   },
   {
     type: "container",
@@ -123,6 +124,7 @@ const locationDetailsChildren02: InfographicConfig.Block[] = [
         positioning: {
           left: 50,
         },
+        numberOfLines: 2
       },
     ],
   },
@@ -150,6 +152,7 @@ const locationDetailsChildren02: InfographicConfig.Block[] = [
         positioning: {
           left: 50,
         },
+        numberOfLines: 2
       },
     ],
   },
