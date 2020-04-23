@@ -5,6 +5,7 @@ import { ITripRepository } from "../models/ITripRepository";
 import { TripsMinimizedReducer } from "./mirroredReducers/TripsMinimizedReducer";
 import { ITrip } from "../models/ITrip";
 import { ITripsRepository } from "../models/ITripsRepository";
+import { ITripRepository2 } from "../models/ITripRepository2";
 
 /**
  * todo use kafka to stream events or gRPC
@@ -24,11 +25,12 @@ export class ServiceBus {
   private _tripMinimizedReducer: TripsMinimizedReducer;
   constructor(
     private TripRepository: ITripRepository,
+    private TripRepository2: ITripRepository2,
     private TripsRepository: ITripsRepository
   ) {
     this.reducer = new TripReducers();
     this.reducer2 = new TripHandlerMediator(
-      this.TripRepository,
+      this.TripRepository2,
       this.TripsRepository
     );
 

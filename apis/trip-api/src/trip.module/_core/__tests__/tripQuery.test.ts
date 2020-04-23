@@ -9,6 +9,7 @@ import { ITrip } from "../models/ITrip";
 import { ITripRepository } from "../models/ITripRepository";
 import { ITripsRepository } from "../models/ITripsRepository";
 import TripsRepository from "../../_infrastructures/repositories/TripsRepository";
+import { ITripRepository2 } from "../models/ITripRepository2";
 
 let schemas: IMongooseSchemas;
 
@@ -21,6 +22,7 @@ afterAll(async () => {
 });
 
 let tripRepository: ITripRepository;
+let tripRepository2: ITripRepository2;
 let tripsRepository: ITripsRepository;
 let serviceBus: ServiceBus;
 
@@ -28,7 +30,7 @@ beforeEach(async () => {
   await mongoUtil.beforeEach();
   tripRepository = new TripRepository(schemas);
   tripsRepository = new TripsRepository(schemas);
-  serviceBus = new ServiceBus(tripRepository, tripsRepository);
+  serviceBus = new ServiceBus(tripRepository, tripRepository2, tripsRepository);
 
   const event: TripEvent = {
     type: "TripCreated",

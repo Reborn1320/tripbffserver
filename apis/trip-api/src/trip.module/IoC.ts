@@ -19,16 +19,18 @@ import { HighlightRepository } from "./_infrastructures/repositories/HighlightRe
 import mongoose from "mongoose";
 import { initSchemas } from "./_infrastructures/models/mongoosed";
 import SearchLocationRepository from "./_infrastructures/repositories/SearchLocationRepository";
+import { ITripRepository2 } from "./_core/models/ITripRepository2";
 const mg = initSchemas(mongoose);
 
 const tripEventRepository = new TripEventRepository();
 const tripRepository = new TripRepository(mg);
+const tripRepository2: ITripRepository2 = null;
 const tripsRepository = new TripsRepository(mg);
 
 const jobDispatcher = new JobDispatcher();
 const tripCommandHandler = new TripCommandHandler(
   tripEventRepository,
-  new ServiceBus(tripRepository, tripsRepository),
+  new ServiceBus(tripRepository, tripRepository2, tripsRepository),
   jobDispatcher
 );
 const tripQueryHandler = new TripQueryHandler(tripRepository);
