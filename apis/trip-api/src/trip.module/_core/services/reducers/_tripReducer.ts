@@ -30,7 +30,12 @@ import finishShareInfographic from "./finishShareInfographic";
 // export function staticRegister(eventType: string, eventHandler: Function) {
 //   staticEventHandlers.set(eventType, eventHandler);
 // }
-
+/**
+ * This is also a mediator
+ *
+ * @export
+ * @class TripReducers
+ */
 export class TripReducers {
   constructor(private TripEventRepository?: ITripEventRepository) {}
 
